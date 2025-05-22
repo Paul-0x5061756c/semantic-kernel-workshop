@@ -18,7 +18,8 @@ namespace Azure_Semantic_Kernel_Workshop
     [return: Description("Today's date and time")]
     public DateTime GetTodaysDateAndTime()
     {
-      var nlTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Amsterdam"); var nlTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, nlTimeZone);
+      var nlTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Amsterdam");
+      var nlTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, nlTimeZone);
       return nlTime;
     }
 
