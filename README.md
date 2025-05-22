@@ -24,7 +24,7 @@ A hands-on workshop project demonstrating the use of Microsoft Semantic Kernel w
 ### Setup
 1. **Clone the repository:**
    ```sh
-   git clone <this-repo-url>
+   git clone https://github.com/Paul-0x5061756c/semantic-kernel-workshop
    cd semantic-kernel-workshop
    ```
 2. **Configure settings:**
