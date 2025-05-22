@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using Azure.Identity;
+﻿using Azure.Identity;
 using Azure_Semantic_Kernel_Workshop;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Graph;
@@ -10,7 +9,7 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 
 var builder = Kernel.CreateBuilder();
-IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.Development.json").Build();
 
 string appClientId = configuration["AZURE:APP_CLIENT_ID"]!;
 string appTenantId = configuration["AZURE:APP_TENANT_ID"]!;
@@ -23,18 +22,31 @@ builder.Services.AddAzureOpenAIChatCompletion(
     endpoint: openAiEndpoint,
     apiKey: openAiKey);
 
-var credential = new InteractiveBrowserCredential(
-    tenantId : appTenantId,
-    clientId : appClientId);
-    
+var scopes = new[] { "Calendars.ReadWrite", "Mail.Send" };
 
-await credential.GetTokenAsync(new TokenRequestContext(new[] { "User.Read", "Calendars.ReadWrite" }), CancellationToken.None);
-var graphClient = new GraphServiceClient(credential, new[] { "Calendars.ReadWrite" });
+var graphClient = new GraphServiceClient(new InteractiveBrowserCredential(tenantId: appTenantId,clientId: appClientId), scopes);
 
+// trigger auth, this is a workaround to get the auth window to show up
+await graphClient.Me.Calendar.GetAsync();
+
+
+// services
 var graphService = new GraphService(graphClient); 
-var calendarPlugin = new CalendarPlugin(graphService);
+var newsService = new GoogleRssFeedService();
+var emailService = new OutlookEmailService(configuration, graphClient);
 
+// plugins
+var calendarPlugin = new CalendarPlugin(graphService);
+var newsPlugin = new NewsPlugin(newsService);
+var emailPlugin = new EmailPlugin(emailService);
+
+
+// register plugins
 builder.Plugins.AddFromObject(calendarPlugin);
+builder.Plugins.AddFromObject(newsPlugin);
+builder.Plugins.AddFromObject(emailPlugin);
+
+
 
 Kernel kernel = builder.Build();
 var chatService = kernel.GetRequiredService<IChatCompletionService>();
