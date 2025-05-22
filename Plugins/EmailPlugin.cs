@@ -14,10 +14,10 @@ namespace Azure_Semantic_Kernel_Workshop
     }
 
     [KernelFunction("SendEmail")]
-    [Description("Send an email")]
+    [Description("Send an email to the user")]
     public async Task SendEmail(
         [Description("The subject of the email")] string subject,
-        [Description("The body of the email")] string body)
+        [Description("The body of the email, this should be in a nice html format with clean styling")] string body)
     {
       await _emailService.SendEmailAsync(subject, body);
     }
