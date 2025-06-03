@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure-Semantic-Kernel-Workshop", "Azure-Semantic-Kernel-Workshop.csproj", "{EAE2C24C-E235-1D6A-08F6-8D780F3D0CF2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EAE2C24C-E235-1D6A-08F6-8D780F3D0CF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAE2C24C-E235-1D6A-08F6-8D780F3D0CF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAE2C24C-E235-1D6A-08F6-8D780F3D0CF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAE2C24C-E235-1D6A-08F6-8D780F3D0CF2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AA9F1BC7-6786-4C1D-BFD7-B69CB0118085}
+	EndGlobalSection
+EndGlobal

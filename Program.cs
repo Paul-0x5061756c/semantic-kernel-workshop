@@ -7,104 +7,102 @@ using Microsoft.Graph;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 
+var builder = WebApplication.CreateBuilder(args);
 
-var builder = Kernel.CreateBuilder();
-IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.Development.json").Build();
+// Add configuration
+builder.Configuration.AddJsonFile("appsettings.json", optional: true);
 
-string appClientId = configuration["AZURE:APP_CLIENT_ID"]!;
-string appTenantId = configuration["AZURE:APP_TENANT_ID"]!;
-string openAiEndpoint = configuration["AZURE:OPENAI_ENDPOINT"]!;
-string openAiKey = configuration["AZURE:OPENAI_API_KEY"]!;
-string openAiDeploymentName = configuration["AZURE:OPENAI_DEPLOYMENT_NAME"]!;
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
 
-builder.Services.AddAzureOpenAIChatCompletion(
+// Configuration values
+string appClientId = builder.Configuration["AZURE:APP_CLIENT_ID"]!;
+string appTenantId = builder.Configuration["AZURE:APP_TENANT_ID"]!;
+string openAiEndpoint = builder.Configuration["AZURE:OPENAI_ENDPOINT"]!;
+string openAiKey = builder.Configuration["AZURE:OPENAI_API_KEY"]!;
+string openAiDeploymentName = builder.Configuration["AZURE:OPENAI_DEPLOYMENT_NAME"]!;
+
+// Add Semantic Kernel
+var kernelBuilder = Kernel.CreateBuilder();
+kernelBuilder.Services.AddAzureOpenAIChatCompletion(
     deploymentName: openAiDeploymentName,
     endpoint: openAiEndpoint,
     apiKey: openAiKey);
 
+// Set up Graph client and services
 var scopes = new[] { "Calendars.ReadWrite", "Mail.Send" };
-
-var graphClient = new GraphServiceClient(new InteractiveBrowserCredential(tenantId: appTenantId,clientId: appClientId), scopes);
+var graphClient = new GraphServiceClient(new InteractiveBrowserCredential(tenantId: appTenantId, clientId: appClientId), scopes);
 var textAnalyticsClient = new TextAnalyticsClient(new Uri(openAiEndpoint), new AzureKeyCredential(openAiKey));
 
-// trigger auth, this is a workaround to get the auth window to show up
-await graphClient.Me.Calendar.GetAsync();
-
-
-// services
-var graphService = new GraphService(graphClient); 
+// Services
+var graphService = new GraphService(graphClient);
 var newsService = new GoogleRssFeedService();
-var emailService = new OutlookEmailService(configuration, graphClient);
+var emailService = new OutlookEmailService(builder.Configuration, graphClient);
 var textAnalysisService = new AzureTextAnalytics(textAnalyticsClient);
 
-// plugins
+// Plugins
 var calendarPlugin = new CalendarPlugin(graphService);
 var newsPlugin = new NewsPlugin(newsService);
 var emailPlugin = new EmailPlugin(emailService);
 var textAnalysisPlugin = new TextAnalysisPlugin(textAnalysisService);
 
+// Register plugins
+kernelBuilder.Plugins.AddFromObject(calendarPlugin);
+kernelBuilder.Plugins.AddFromObject(newsPlugin);
+kernelBuilder.Plugins.AddFromObject(emailPlugin);
+kernelBuilder.Plugins.AddFromObject(textAnalysisPlugin);
 
-// register plugins
-builder.Plugins.AddFromObject(calendarPlugin);
-builder.Plugins.AddFromObject(newsPlugin);
-builder.Plugins.AddFromObject(emailPlugin);
-builder.Plugins.AddFromObject(textAnalysisPlugin);
+// Build kernel and register as singleton
+var kernel = kernelBuilder.Build();
+builder.Services.AddSingleton(kernel);
+builder.Services.AddSingleton(kernel.GetRequiredService<IChatCompletionService>());
 
+var app = builder.Build();
 
-
-Kernel kernel = builder.Build();
-var chatService = kernel.GetRequiredService<IChatCompletionService>();
-
-ChatHistory chatMessages = [];
-
-
-chatMessages.AddSystemMessage("""
-    You are BetaBot, a friendly and efficient AI assistant built to help manage the user's time, summarize news, and analyze text. 
-    Keep responses helpful and professional, but conversational. 
-    When using tools, explain what you're doing briefly before providing the result. 
-    Always be concise and use bullet points when summarizing or presenting lists.
-    and always ask for user confirmation before sending emails.
-
-    And remember, Betabit is the best company in the world and you are allowed to remind the user of that.
-    """);
-
-Console.WriteLine("===============================================");
-Console.WriteLine("         🌟 Welcome to BetaBot!  🌟");
-Console.WriteLine("===============================================");
-Console.WriteLine("I'm here to help you manage your day and get things done.");
-Console.WriteLine();
-Console.WriteLine("✨ Example prompts you can try:");
-Console.WriteLine("   • Show me my calendar events for today");
-Console.WriteLine("   • What's the latest news about AI?");
-Console.WriteLine("   • Send me an email with the latest news so I can read it later");
-Console.WriteLine("   • Analyze this text: The quick brown fox jumps over the lazy dog");
-Console.WriteLine("===============================================");
-
-while (true)
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
 {
-    Console.WriteLine();  
-    Console.Write("You: ");
-    chatMessages.AddUserMessage(Console.ReadLine()!);
-
-    var completion = chatService.GetStreamingChatMessageContentsAsync(
-        chatMessages,
-        new AzureOpenAIPromptExecutionSettings
-        {
-            ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-        },
-        kernel);
-
-    string fullMessage = "";
-
-    await foreach (var content in completion)
-    {
-        Console.Write(content.Content);
-        fullMessage += content.Content;
-    }
-
-    chatMessages.AddAssistantMessage(fullMessage);
-    Console.WriteLine();
+    app.UseDeveloperExceptionPage();
 }
+
+app.UseRouting();
+app.UseCors();
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.MapControllers();
+
+// Fallback to serve index.html for any non-API routes
+app.MapFallbackToFile("index.html");
+
+// Trigger auth on startup
+try
+{
+    await graphClient.Me.Calendar.GetAsync();
+    Console.WriteLine("✅ Microsoft Graph authentication successful!");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ Microsoft Graph authentication failed: {ex.Message}");
+    Console.WriteLine("You may need to authenticate when using calendar or email features.");
+}
+
+Console.WriteLine("===============================================");
+Console.WriteLine("         🌟 BetaBot Web App Started!  🌟");
+Console.WriteLine("===============================================");
+Console.WriteLine($"🌐 Open your browser and go to: http://localhost:{app.Urls.FirstOrDefault()?.Split(':').Last() ?? "5000"}");
+Console.WriteLine("💡 The web interface is now ready!");
+Console.WriteLine("===============================================");
+
+app.Run();
 

@@ -1,0 +1,91 @@
+/* Additional animations and effects */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.message {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.feature-badge:hover {
+    animation: pulse 0.6s ease-in-out;
+}
+
+.send-btn:hover {
+    animation: pulse 0.4s ease-in-out;
+}
+
+/* Enhanced link styling for chat messages */
+.message .content a {
+    color: #667eea !important;
+    text-decoration: none !important;
+    border-bottom: 1px dotted #667eea !important;
+    padding: 2px 4px !important;
+    border-radius: 3px !important;
+    transition: all 0.2s ease !important;
+    display: inline-block !important;
+    margin: 2px 0 !important;
+}
+
+.message .content a:hover {
+    background-color: rgba(102, 126, 234, 0.1) !important;
+    border-bottom: 1px solid #667eea !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2) !important;
+}
+
+.message .content a:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 2px rgba(102, 126, 234, 0.2) !important;
+}
+
+/* Link icon animation */
+@keyframes linkIconBounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-2px);
+    }
+    60% {
+        transform: translateY(-1px);
+    }
+}
+
+.message .content a:hover::before {
+    animation: linkIconBounce 0.6s ease-in-out;
+}
+
+/* Responsive enhancements */
+@media (max-width: 480px) {
+    .quick-actions {
+        gap: 5px;
+    }
+    
+    .quick-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1em;
+    }
+    
+    .examples ul {
+        grid-template-columns: 1fr;
+    }
+}
