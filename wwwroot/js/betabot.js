@@ -1,4 +1,3 @@
-// BetaBot Chat Application - Enhanced functionality
 class BetaBotChat {
   constructor() {
     this.messagesContainer = document.getElementById("messages");

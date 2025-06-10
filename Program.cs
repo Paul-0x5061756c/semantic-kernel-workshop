@@ -2,11 +2,9 @@
 using Azure.AI.TextAnalytics;
 using Azure.Identity;
 using Azure_Semantic_Kernel_Workshop;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Graph;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +64,7 @@ kernelBuilder.Plugins.AddFromObject(textAnalysisPlugin);
 var kernel = kernelBuilder.Build();
 builder.Services.AddSingleton(kernel);
 builder.Services.AddSingleton(kernel.GetRequiredService<IChatCompletionService>());
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 var app = builder.Build();
 
@@ -79,6 +78,7 @@ app.UseRouting();
 app.UseCors();
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
 
 app.MapControllers();
 

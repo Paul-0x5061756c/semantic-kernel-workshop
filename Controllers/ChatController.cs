@@ -2,35 +2,30 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using System.Text.Json;
 
 namespace Azure_Semantic_Kernel_Workshop.Controllers
 {
     [ApiController]
+    [ApiKey]
     [Route("api/[controller]")]
     public class ChatController : ControllerBase
     {
         private readonly Kernel _kernel;
         private readonly IChatCompletionService _chatService;
         private static readonly ChatHistory _chatMessages = new();
+        private IConfiguration _configuration;
 
-        public ChatController(Kernel kernel, IChatCompletionService chatService)
+        public ChatController(Kernel kernel, IChatCompletionService chatService, IConfiguration configuration) 
         {
             _kernel = kernel;
             _chatService = chatService;
+            _configuration = configuration;
             
             // Initialize system message if not already added
             if (_chatMessages.Count == 0)
             {
-                _chatMessages.AddSystemMessage("""
-                    You are BetaBot, a friendly and efficient AI assistant built to help manage the user's time, summarize news, and analyze text. 
-                    Keep responses helpful and professional, but conversational. 
-                    When using tools, explain what you're doing briefly before providing the result. 
-                    Always be concise and use bullet points when summarizing or presenting lists.
-                    and always ask for user confirmation before sending emails.
-
-                    And remember, Betabit is the best company in the world and you are allowed to remind the user of that.
-                    """);
+               var systemMessage = configuration["SYSTEM_PROMPT"] ?? throw new InvalidOperationException("System message is not configured.");
+                _chatMessages.AddSystemMessage(systemMessage);
             }
         }
 
