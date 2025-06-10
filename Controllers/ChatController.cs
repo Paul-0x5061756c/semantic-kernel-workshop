@@ -7,6 +7,7 @@ namespace Azure_Semantic_Kernel_Workshop.Controllers
 {
     [ApiController]
     [ApiKey]
+    [RateLimit(100)]
     [Route("api/[controller]")]
     public class ChatController : ControllerBase
     {
@@ -24,7 +25,7 @@ namespace Azure_Semantic_Kernel_Workshop.Controllers
             // Initialize system message if not already added
             if (_chatMessages.Count == 0)
             {
-               var systemMessage = configuration["SYSTEM_PROMPT"] ?? throw new InvalidOperationException("System message is not configured.");
+               var systemMessage = _configuration["SYSTEM_PROMPT"] ?? throw new InvalidOperationException("System message is not configured.");
                 _chatMessages.AddSystemMessage(systemMessage);
             }
         }

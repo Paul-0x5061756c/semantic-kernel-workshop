@@ -240,21 +240,28 @@ class BetaBotChat {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ message: message }),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
+        if (response.status === 429) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`Rate limit exceeded: ${errorData.error || 'Too many requests'}`);
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
+      }const data = await response.json();
+      this.hideLoading();
+      this.addMessage(data.message, false);    } catch (error) {
+      this.hideLoading();
+      
+      if (error.message.includes('Rate limit exceeded')) {
+        this.addMessage(
+          "⚠️ You're sending messages too quickly! Please wait a moment before trying again. I can handle up to 100 messages per minute.",
+          false
+        );
+      } else {
+        this.addMessage(
+          "Sorry, I encountered an error. Please try again. If the problem persists, please check your connection and try again.",
+          false
+        );
       }
-
-      const data = await response.json();
-      this.hideLoading();
-      this.addMessage(data.message, false);
-    } catch (error) {
-      this.hideLoading();
-      this.addMessage(
-        "Sorry, I encountered an error. Please try again. If the problem persists, please check your connection and try again.",
-        false
-      );
       console.error("Error:", error);
     } finally {
       // Re-enable input and button

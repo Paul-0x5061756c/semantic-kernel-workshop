@@ -11,6 +11,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Add configuration
 builder.Configuration.AddJsonFile("appsettings.json", optional: true);
 
+// Configure logging
+builder.Services.AddLogging(config =>
+{
+    config.AddConsole();
+    config.AddDebug();
+    
+    // Set minimum log level based on environment
+    if (builder.Environment.IsDevelopment())
+    {
+        config.SetMinimumLevel(LogLevel.Debug);
+    }
+    else
+    {
+        config.SetMinimumLevel(LogLevel.Information);
+    }
+});
+
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
@@ -42,31 +59,38 @@ var scopes = new[] { "Calendars.ReadWrite", "Mail.Send" };
 var graphClient = new GraphServiceClient(new InteractiveBrowserCredential(tenantId: appTenantId, clientId: appClientId), scopes);
 var textAnalyticsClient = new TextAnalyticsClient(new Uri(openAiEndpoint), new AzureKeyCredential(openAiKey));
 
-// Services
-var graphService = new GraphService(graphClient);
-var newsService = new GoogleRssFeedService();
-var emailService = new OutlookEmailService(builder.Configuration, graphClient);
-var textAnalysisService = new AzureTextAnalytics(textAnalyticsClient);
-
-// Plugins
-var calendarPlugin = new CalendarPlugin(graphService);
-var newsPlugin = new NewsPlugin(newsService);
-var emailPlugin = new EmailPlugin(emailService);
-var textAnalysisPlugin = new TextAnalysisPlugin(textAnalysisService);
-
-// Register plugins
-kernelBuilder.Plugins.AddFromObject(calendarPlugin);
-kernelBuilder.Plugins.AddFromObject(newsPlugin);
-kernelBuilder.Plugins.AddFromObject(emailPlugin);
-kernelBuilder.Plugins.AddFromObject(textAnalysisPlugin);
+// Register services in DI container
+builder.Services.AddSingleton(graphClient);
+builder.Services.AddSingleton(textAnalyticsClient);
+builder.Services.AddSingleton<IGraphService, GraphService>();
+builder.Services.AddSingleton<INewsService, GoogleRssFeedService>();
+builder.Services.AddSingleton<IEmailService, OutlookEmailService>();
+builder.Services.AddSingleton<ITextAnalysisService, AzureTextAnalytics>();
 
 // Build kernel and register as singleton
 var kernel = kernelBuilder.Build();
 builder.Services.AddSingleton(kernel);
 builder.Services.AddSingleton(kernel.GetRequiredService<IChatCompletionService>());
-builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 var app = builder.Build();
+
+// Get services from DI container
+var graphService = app.Services.GetRequiredService<IGraphService>();
+var newsService = app.Services.GetRequiredService<INewsService>();
+var emailService = app.Services.GetRequiredService<IEmailService>();
+var textAnalysisService = app.Services.GetRequiredService<ITextAnalysisService>();
+
+// Create plugins with logger injection
+var calendarPlugin = new CalendarPlugin(graphService, app.Services.GetRequiredService<ILogger<CalendarPlugin>>());
+var newsPlugin = new NewsPlugin(newsService, app.Services.GetRequiredService<ILogger<NewsPlugin>>());
+var emailPlugin = new EmailPlugin(emailService, app.Services.GetRequiredService<ILogger<EmailPlugin>>());
+var textAnalysisPlugin = new TextAnalysisPlugin(textAnalysisService, app.Services.GetRequiredService<ILogger<TextAnalysisPlugin>>());
+
+// Register plugins with kernel
+kernel.Plugins.AddFromObject(calendarPlugin);
+kernel.Plugins.AddFromObject(newsPlugin);
+kernel.Plugins.AddFromObject(emailPlugin);
+kernel.Plugins.AddFromObject(textAnalysisPlugin);
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -83,7 +107,7 @@ app.Use(async (context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/api"))
     {
-        context.Request.Headers.Add("X-Api-Key", builder.Configuration["API_KEY"]);
+        context.Request.Headers["X-Api-Key"] = builder.Configuration["API_KEY"];
     }
     await next.Invoke();
 });
