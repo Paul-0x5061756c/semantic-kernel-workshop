@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using Microsoft.Graph.Models;
 using Microsoft.SemanticKernel;
-using Microsoft.Extensions.Logging;
 
 namespace Azure_Semantic_Kernel_Workshop
 {
@@ -14,7 +13,9 @@ namespace Azure_Semantic_Kernel_Workshop
     {
       _graphService = graphService;
       _logger = logger;
-    }    [KernelFunction("GetTodaysDateAndTime")]
+    }
+
+    [KernelFunction("GetTodaysDateAndTime")]
     [Description("Get today's date and time")]
     [return: Description("Today's date and time")]
     public DateTime GetTodaysDateAndTime()

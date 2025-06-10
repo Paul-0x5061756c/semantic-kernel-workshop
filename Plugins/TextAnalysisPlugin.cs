@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using Microsoft.SemanticKernel;
-using Microsoft.Extensions.Logging;
 
 namespace Azure_Semantic_Kernel_Workshop
 {
@@ -13,7 +12,9 @@ namespace Azure_Semantic_Kernel_Workshop
     {
       _textAnalysisService = textAnalysisService;
       _logger = logger;
-    }    [KernelFunction("AnalyzeSentiment")]
+    }
+
+    [KernelFunction("AnalyzeSentiment")]
     [Description("Analyzes the sentiment of the provided text and returns the sentiment score.")]
     [return: Description("Sentiment score")]
     public async Task<string> AnalyzeSentimentAsync([Description("Text to analyze for sentiment")] string text)

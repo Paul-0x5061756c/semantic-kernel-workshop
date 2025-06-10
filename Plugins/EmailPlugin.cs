@@ -1,7 +1,5 @@
-
 using System.ComponentModel;
 using Microsoft.SemanticKernel;
-using Microsoft.Extensions.Logging;
 
 namespace Azure_Semantic_Kernel_Workshop
 {
@@ -14,7 +12,9 @@ namespace Azure_Semantic_Kernel_Workshop
     {
       _emailService = emailService;
       _logger = logger;
-    }    [KernelFunction("SendEmail")]
+    }
+
+    [KernelFunction("SendEmail")]
     [Description("Send an email to the user")]
     public async Task SendEmail(
         [Description("The subject of the email")] string subject,
