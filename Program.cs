@@ -79,6 +79,15 @@ app.UseCors();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Request.Headers.Add("X-Api-Key", builder.Configuration["API_KEY"]);
+    }
+    await next.Invoke();
+});
+
 
 app.MapControllers();
 
