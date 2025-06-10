@@ -1,7 +1,4 @@
-using System.ComponentModel;
-using Microsoft.SemanticKernel;
 using SimpleFeedReader;
-using Microsoft.Extensions.Logging;
 
 namespace Azure_Semantic_Kernel_Workshop
 {
@@ -14,15 +11,11 @@ namespace Azure_Semantic_Kernel_Workshop
     {
       _newsService = newsService;
       _logger = logger;
-    }    [KernelFunction("GetNews")]
-    [Description("Retrieves a list of the latest news articles matching the specified search query. Returns up to the specified number of articles.")]
-    [return: Description("List of news articles")]
-    public async Task<List<FeedItem>> GetNewsAsync([Description("Search term to find relevant news articles")]string query, int count = 10)
+    }
+
+    public async Task<List<FeedItem>> GetNewsAsync(string query, int count = 10)
     {
-      _logger.LogInformation("Retrieving news articles for query: {Query}, count: {Count}", query, count);
-      var articles = await _newsService.GetNewsAsync(query, count);
-      _logger.LogInformation("Successfully retrieved {ArticleCount} news articles for query: {Query}", articles.Count, query);
-      return articles;
+      throw new NotImplementedException("This method is not implemented yet");
     }
   }
 }
